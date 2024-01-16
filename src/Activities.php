@@ -39,6 +39,23 @@ function activities(Route $route, array $postData): Response {
  * @return Response
  */
 function hamtaAllaAktiviteter(): Response {
+    // koppla mot databas
+    $db= connectDb();
+
+    // hämta alla aktiviteter
+    $result = $db->query("SELECT id, namn FROM aktiviteter");
+
+    // skapa returvärde
+    $retur=[];
+    foreach ($result as $item) {
+        $post=new stdClass();
+        $post->id=$item["id"];
+        $post->namn=$item["namn"];
+        $retur[]=$post;
+    }
+
+    // skicka svar
+    return new Response($retur);
 }
 
 /**
@@ -55,6 +72,31 @@ function hamtaEnskildAktivitet(string $id): Response {
  * @return Response
  */
 function sparaNyAktivitet(string $aktivitet): Response {
+    //kontrollera indata - rensa bort onödiga tecken
+    $kontrolleradAktivitet=filter_var($aktivitet, FILTER_SANITIZE_ENCODED);
+
+    // koppla mot databasen
+    $db= connectDb();
+
+    // exekvera frågan
+    $stmt=$db->prepare("INSERT INTO aktiviteter (namn) VALUES (:aktivitet)");
+    $svar=$stmt->execute(["aktivitet"=>$kontrolleradAktivitet]);
+
+    // kontrollera svaret och returnera svar
+    if ($svar===true) {
+        $retur=new stdClass();
+        $retur->id=$db->lastInsertId();
+        $retur->meddelande = ["Spara lyckades", "1 post lades till"];
+        return new Response($retur);
+    } else {
+        $retur=new stdClass();
+        $retur->error=["Bad request", "Något gick fel vid spara"];
+        return new Response($retur, 400);
+    }
+
+    // skapa utdata
+
+    //returnena utdata
 }
 
 /**

@@ -26,7 +26,13 @@ function allaActivityTester(): string {
 function test_HamtaAllaAktiviteter(): string {
     $retur = "<h2>test_HamtaAllaAktiviteter</h2>";
     try {
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
+        $svar=hamtaAllaAktiviteter();
+        if($svar->getStatus()===200) {
+            $retur .=  "<p class='ok'>Hämta alla aktiviteter lyckades" . count($svar->getContent() )  . " poster returnerades</p>";
+        } else {
+            $retur .= "<p class='error'>Hämta alla aktiviteter misslyckades<br>"
+                . $svar->getStatus() . " returnerades</p>";
+        }
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
     }
