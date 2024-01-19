@@ -47,9 +47,70 @@ function test_HamtaAllaAktiviteter(): string {
 function test_HamtaEnAktivitet(): string {
     $retur = "<h2>test_HamtaEnAktivitet</h2>";
     try {
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
+        // misslyckas hämta post id=-1
+        $svar=hamtaEnskildAktivitet("-1");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Hämta post med id=-1 misslyckas, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Hämta post med id=-1 returnerade " .$svar->getStatus()
+                . " istället för förväntat 400</p>";
+        }
+
+        // misslyckas hämta post id=0
+        $svar=hamtaEnskildAktivitet("0");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Hämta post med id=0 misslyckas, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Hämta post med id=0 returnerade " .$svar->getStatus()
+                . " istället för förväntat 400</p>";
+        }
+
+        // misslyckas hämta post id=3.14
+        $svar=hamtaEnskildAktivitet("3.14");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Hämta post med id=3.14 misslyckas, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Hämta post med id=3.14 returnerade " .$svar->getStatus()
+                . " istället för förväntat 400</p>";
+        }
+
+        // koppla databas
+        $db= connectDb();
+
+        // skapa transaktion
+        $db->beginTransaction();
+
+        // Skapa en ny post för att vara säker på att posten finns
+        $svar= sparaNyAktivitet("aktivitet" . time());
+        if($svar->getStatus()===200)    {
+            $nyttID=$svar->getContent()->id;
+        } else {
+            throw new Exception("kunde inte skapa ny post för kontroll");
+        }
+
+        // lyckas hämta skapad post
+        $svar= hamtaEnskildAktivitet("$nyttID");
+        if($svar->getStatus()===200)    {
+            $retur .="<p class='ok'>Hämta aen aktivitet gick bra</p>";
+        } else {
+            $retur .="<p class='error'>hämta en aktivitet misslyckades, status " .$svar->getStatus()
+                . " Returnenades istället för förväntat 200</p>";
+        }
+        
+        // misslyckas med att hämta post med ID +1
+        $nyttID++;
+        $svar= hamtaEnskildAktivitet("$nyttID");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Hämta en aktivitet med id som saknas misslyckades, som förväntas</p>";
+        } else {
+            $retur .="<p class='error'>hämta en aktivitet med id misslyckades, status " .$svar->getStatus()
+                . " Returnenades istället för förväntat 400</p>";
+        }
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
+    } finally {
+        // återställa databsen
+        $db->rollBack();
     }
 
     return $retur;
@@ -84,7 +145,7 @@ function test_SparaNyAktivitet(): string {
     // Spara ny aktivitet - lyckat
     $svar= sparaNyAktivitet($nyAktivitet);
     if($svar->getStatus()===200)    {
-        $retur .="<p class='error'>Spara aktivitet lyckades</p>";
+        $retur .="<p class='ok'>Spara aktivitet lyckades</p>";
     } else {
         $retur .="<p class='error'>Spara aktivitet misslyckades, status " . $svar->getStatus()
             . "returnerades istället som förväntat 400</p>";
@@ -98,7 +159,7 @@ function test_SparaNyAktivitet(): string {
         $retur .="<p class='error'>Spara duplicerad aktivitet misslyckades, status " . $svar->getStatus()
             . "returnerades istället som förväntat 400</p>";
     }
-    
+
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
     } finally {
