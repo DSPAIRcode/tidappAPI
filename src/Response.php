@@ -35,8 +35,8 @@ class Response {
      * @return never
      */
     public function skickaJSON(): never {
-        $statusText = $this->getStatusMeddelande();
-        header("$statusText;Content-type:application/json;charset=utf-8");
+        http_response_code($this->status);
+        header("content-type: application/json; charset=UTF-8");
         $json = json_encode($this->content, JSON_PRETTY_PRINT + JSON_UNESCAPED_UNICODE);
         echo $json;
         exit;

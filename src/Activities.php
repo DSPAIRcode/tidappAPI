@@ -75,7 +75,16 @@ function sparaNyAktivitet(string $aktivitet): Response {
     //kontrollera indata - rensa bort onödiga tecken
     $kontrolleradAktivitet=filter_var($aktivitet, FILTER_SANITIZE_ENCODED);
 
-    // koppla mot databasen
+    // kontrollerar att aktiviteten inte är tom
+    if (trim($aktivitet)==="")  {
+        $retur=new stdClass();
+        $retur->error=["Bad request", "Aktivitet får inte vara tom"];
+        return new Response($retur, 400);
+    }
+    
+    try {
+
+        // koppla mot databasen
     $db= connectDb();
 
     // exekvera frågan
@@ -93,10 +102,13 @@ function sparaNyAktivitet(string $aktivitet): Response {
         $retur->error=["Bad request", "Något gick fel vid spara"];
         return new Response($retur, 400);
     }
+} catch (Exception $e) {
+    $retur=new stdClass();
+    $retur->error=["Bad request", "Något gick fel vid spara", $e->getMessage()];
+    return new Response($retur, 400);
+}
 
-    // skapa utdata
-
-    //returnena utdata
+    
 }
 
 /**
