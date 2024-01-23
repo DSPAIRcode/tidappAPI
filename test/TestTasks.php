@@ -53,7 +53,7 @@ function test_HamtaUppgifterSida(): string {
     }
 
     // lyckad med att hämta sida 1
-    $svar= hamtaSida("1");
+    $svar= hamtaSida("1",2);
     if($svar->getStatus()===200)    {
         $retur .="<p class='ok'>Misslyckades med att hämta sida 1 som förväntas</p>";
         $sista=$svar->getContent()->pages;
@@ -65,7 +65,7 @@ function test_HamtaUppgifterSida(): string {
     // misslyckad med att hämta sida > antal sidor
     if(isset($sista)) {
         $sista++;
-        $svar= hamtaSida("$sista");
+        $svar= hamtaSida("$sista",2);
         if($svar->getStatus()===400)    {
             $retur .="<p class='ok'>Misslyckades med att hämta sida > antal sidor, som förväntat</p>";
         } else {
