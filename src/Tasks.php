@@ -117,7 +117,63 @@ function hamtaSida(string $sida, int $posterPerSida=10) : Response {
  * @return Response
  */
 function hamtaDatum(string $from, string $tom): Response {
-    
+    // kontrollera indata
+    $fromDate= DateTimeImmutable::createFromFormat("Y-m-d", $from);
+    $tomDate= DateTimeImmutable::createFromFormat("Y-m-d", $tom);
+    $datumFel=[];
+
+    if($fromDate===false)   {
+        $datumFel[]="Ogiltig från-datum";
+    }
+    if($tomDate===false)   {
+        $datumFel[]="Ogiltig till-datum";
+    }
+    if($fromDate && $fromDate->format("Y-m-d")!==$from)  {
+        $datumFel[]="Ogiltig angivet från-datum";
+    }
+    if($tomDate && $tomDate->format("Y-m-d")!==$tom)  {
+        $datumFel[]="Ogiltig angivet till-datum";
+    }
+    if($fromDate && $tomDate && $fromDate->format("Y-m-d")>$tomDate->format("Y-m-d"))  {
+        $datumFel[]="från-datum får inte vara större än till-datum";
+    }
+
+    if(count($datumFel)>0) {
+        $retur= new stdClass();
+        $retur->error=$datumFel;
+        array_unshift($retur->error, "Bad request");
+        return new Response($retur, 400);
+    }
+
+    // koppla databas
+    $db= connectDb();
+
+    //exekvera SQL
+    $stmt=$db->prepare("SELECT u.id, datum, tid, beskrivning, aktivitetid, namn "
+                . "FROM uppgifter u INNER JOIN aktiviteter a ON aktivitetid=a.id "
+                . "WHERE datum BETWEEN :from AND :to "
+                . "ORDER BY datum ");
+    $stmt->execute(["from"=>$fromDate->format("Y-m-d"), "to"=>$tomDate->format("Y-m-d")]);
+    $result=$stmt->fetchAll();
+
+    $uppgifter=[];
+    foreach ($result as $row)   {
+        $rad=new stdClass();
+        $rad->id=$row["id"];
+        $rad->activityId=$row["aktivitetid"];
+        $rad->date=$row["datum"];
+        $tid=new DateTime($row["tid"]);
+        $rad->time=$tid->format("H:i");
+        $rad->activity=$row["namn"];
+        $rad->description=$row["beskrivning"];
+        $uppgifter[]=$rad;
+    }
+
+    // returnera svar
+    $retur=new stdClass();
+    $retur->tasks=$uppgifter;
+    return new Response($retur);
+
 }
 
 /**
@@ -135,7 +191,37 @@ function hamtaEnskildUppgift(string $id): Response {
  * @return Response
  */
 function sparaNyUppgift(array $postData): Response {
-    
+    // kontrollera indata
+    $felMeddelande=kontrolleraindata($postData);
+
+    if(count($felMeddelande)>0) {
+        $retur= new stdClass();
+        $retur->error=$felMeddelande;
+        array_unshift($retur->error, "Bad Request");
+        return new Response($retur, 400);
+    }
+
+    // Koppla databas
+    $db= connectDb();
+
+    // Exekvera databasfråga
+    $stmt=$db->prepare("INSERT INTO uppgifter (datum, tid, beskrivning, aktivitetid) "
+        . "VALUES (:datum, :tid, :beskrivning, :aktivitetid)");
+    $stmt->execute(["datum"=>$postData["date"], "tid"=>$postData["time"],
+        "beskrivning"=> trim(filter_var($postData["description"]??"", FILTER_SANITIZE_SPECIAL_CHARS)),
+        "aktivitetid"=>$postData["activityid"]]);
+
+    // kontrollera svaret
+    if($stmt->rowCount()===1)   {
+        $retur=new stdClass();
+        $retur->id=$db->lastInsertId();
+        $retur->message=["skapa ny post lyckades", "1 post sparad"];
+        return new Response($retur);
+    } else {
+        $retur=new stdClass();
+        $retur->error=["Fel vid databasanrop", "Kunde inte skapa post"];
+        return new Response($retur, 400);
+    }
 }
 
 /**
