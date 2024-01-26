@@ -173,11 +173,82 @@ function test_HamtaEnUppgift(): string {
     $retur = "<h2>test_HamtaEnUppgift</h2>";
 
     try {
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
+
+        // Misslyckas med att hämta id=0
+        $svar= hamtaEnskildUppgift("0");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Misslyckades hämta uppgift med id=0, som förväntat</p>";
+        } else {
+            $retur .="<p class='ok'>Misslyckades hämta uppgift med id=0<br> "
+            . $svar->getStatus() . " returneras instället för förväntat 200<br>"
+            . print_r($svar->getContent(), true) . "</p>";
+        }
+
+        // Misslyckas med att hämta id=sju
+        $svar= hamtaEnskildUppgift("sju");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Misslyckades hämta uppgift med id=sju, som förväntat</p>";
+        } else {
+            $retur .="<p class='ok'>Misslyckades hämta uppgift med id=sju<br> "
+            . $svar->getStatus() . " returneras instället för förväntat 200<br>"
+            . print_r($svar->getContent(), true) . "</p>";
+        }
+
+        // Misslyckas med att hämta id=3.14
+        $svar= hamtaEnskildUppgift("3.14");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Misslyckades hämta uppgift med id=3.14, som förväntat</p>";
+        } else {
+            $retur .="<p class='ok'>Misslyckades hämta uppgift med id=3.14<br> "
+            . $svar->getStatus() . " returneras instället för förväntat 200<br>"
+            . print_r($svar->getContent(), true) . "</p>";
+        }
+
+        // koppla databas och transaction
+        $db= connectDb();
+        $db->beginTransaction();
+
+        // förbered data
+        $content= hamtaAllaAktiviteter()->getContent();
+        $aktiviteter=$content["activities"];
+        $aktivitetid=$aktiviteter[0]->id;
+        $postdata=["date"=> date("Y-m-d"),
+            "time"=>"01:00",
+            "description"=>"testa",
+            "activityId"=>"$aktivitetid"];
+
+        // skapa post
+        $svar= sparaNyUppgift($postdata);
+        $taskId=$svar->getContent()->id;
+
+        // hämta nyss skapad post
+        $svar= hamtaEnskildUppgift("$taskId");
+        if($svar->getStatus()===200)    {
+            $retur .="<p class='ok'>lyckades med att hämta en uppgift</p>";
+        } else {
+            $retur .="<p class='error'>misslyckades med att hämta ny skapd uppgift<br> "
+            . $svar->getStatus() . " returneras instället för förväntat 200<br>"
+            . print_r($svar->getContent(), true) . "</p>";
+        }
+
+        //misslyckas med att hämta id som inte finns
+        $taskId++;
+        $svar= hamtaEnskildUppgift("$taskId");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>misslyckades med att hämta en uppgift som inte finns</p>";
+        } else {
+            $retur .="<p class='error'>misslyckades med att hämta uppgift som inte finns<br> "
+            . $svar->getStatus() . " returneras instället för förväntat 200<br>"
+            . print_r($svar->getContent(), true) . "</p>";
+        }
+
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
+    } finally {
+        if($db) {
+            $db->rollback();
+        }
     }
-
     return $retur;
 }
 
@@ -189,9 +260,59 @@ function test_SparaUppgift(): string {
     $retur = "<h2>test_SparaUppgift</h2>";
 
     try {
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
+        $db= connectDb();
+        // skapar en tarnsaktion så att man inte får skräp i databasen
+        $db->beginTransaction();
+
+        // misslyckas med att spara pga saknad datum
+        $postdata=["time"=>"01:00",
+            "date"=>"2023-12-31",
+            "description"=>"Detta är en testpost"];
+
+            $svar= sparaNyUppgift($postdata);
+            if($svar->getStatus()===400)    {
+                $retur .="<p class='ok'>misslyckas med att spara post utan aktivitetsID, som förväntat</p>";
+            } else {
+                $retur .="<p class='error'>misslyckas med att spara post utan aktivitetsID<br>"
+                . $svar->getStatus(). " returnerades istället för förväntat 400<br>"
+                . print_r($svar->getContent(), true)    . "</p>";
+            }
+
+        // lyckas med att spara post utan beskrivning
+        $content= hamtaAllaAktiviteter()->getContent();
+        $aktiviteter=$content["activities"];
+        $aktivitetid=$aktiviteter[0]->id;
+        $postdata=["time"=>"01:00",
+            "date"=>"2023-12-31",
+            "activityId"=>"$aktivitetid"];
+
+        // testa
+        $svar= sparaNyUppgift($postdata);
+        if($svar->getStatus()===200)    {
+            $retur .="<p class='ok'>Lyckades spara uppgift utan beskrivning</p>";
+        } else {
+            $retur .="<p class='error'>missLyckades spara uppgift utan beskrivning<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 200<br>"
+            . print_r($svar->getContent(), true) . print_r($postdata,true)   . "</p>";
+        }
+
+        // lyckas spara post med alla uppgifter
+        $postdata["description"]="detta är en testpost";
+        $svar= sparaNyUppgift($postdata);
+        if($svar->getStatus()===200)    {
+            $retur .="<p class='ok'>Lyckades spara uppgift med alla uppgifter</p>";
+        } else {
+            $retur .="<p class='error'>missLyckades spara uppgift med alla uppgifter<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 200<br>"
+            . print_r($svar->getContent(), true)    . "</p>";
+        }
+
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
+    } finally {
+        if($db) {
+            $db->rollback();
+        }
     }
 
     return $retur;

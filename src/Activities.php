@@ -50,12 +50,12 @@ function hamtaAllaAktiviteter(): Response {
     foreach ($result as $item) {
         $post=new stdClass();
         $post->id=$item["id"];
-        $post->namn=$item["namn"];
+        $post->activity=$item["namn"];
         $retur[]=$post;
     }
 
     // skicka svar
-    return new Response($retur);
+    return new Response(["activities"=>$retur]);
 }
 
 /**

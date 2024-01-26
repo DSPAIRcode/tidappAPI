@@ -47,7 +47,7 @@ function kontrolleraindata(array $postdata):array   {
     }
 
     // kontrollera aktivitetsID $postdata["activityID"]
-    $aktivitet=hamtaEnskildAktivitet($postdata["activityid"] ??"");
+    $aktivitet=hamtaEnskildAktivitet($postdata["activityId"] ??"");
     if($aktivitet->getStatus()===400 )  {
         $retur[]="Angivet aktivitets id saknas";
     }

@@ -182,7 +182,43 @@ function hamtaDatum(string $from, string $tom): Response {
  * @return Response
  */
 function hamtaEnskildUppgift(string $id): Response {
+    // kontrollrea indata
+    $kontrolleratId= filter_var($id, FILTER_VALIDATE_INT);
+    if(!$kontrolleratId)    {
+        $retur= new stdClass();
+        $retur->error=["Bad Request", "felaktig angivet id"];
+        return new Response($retur, 400);
+    }
+
+    if($kontrolleratId && $kontrolleratId<1)    {
+        $retur= new stdClass();
+        $retur->error=["Bad Request", "ogiltigt id"];
+        return new Response($retur, 400);
+    }
+
+    // kopla databas
+    $db= connectDb();
+
+    // exekvera SQL
+    $stmt=$db->prepare("SELECT u.id, tid, datum, beskrivning, aktivitetid, namn "
+        . "FROM uppgifter u INNER JOIN aktiviteter a ON aktivitetId=a.id "
+        . "WHERE u.id=:id");
+    $stmt->execute(["id"=>$kontrolleratId]);
     
+    // retur svar
+    if($row=$stmt->fetch()) {
+        $retur=new stdClass();
+        $retur->id=$row["id"];
+        $retur->date=$row["datum"];
+        $retur->time=substr($row["tid"], 0,-3);
+        $retur->activity=$row["namn"];
+        $retur->activityId=$row["aktivitetid"];
+        return new Response($retur);
+    } else {
+        $retur=new stdClass();
+        $retur->error=["Hämta misslyckades", "Kunde inte hitta uppgift med angivet id"];
+        return new Response($retur, 400);
+    }
 }
 
 /**
@@ -209,7 +245,7 @@ function sparaNyUppgift(array $postData): Response {
         . "VALUES (:datum, :tid, :beskrivning, :aktivitetid)");
     $stmt->execute(["datum"=>$postData["date"], "tid"=>$postData["time"],
         "beskrivning"=> trim(filter_var($postData["description"]??"", FILTER_SANITIZE_SPECIAL_CHARS)),
-        "aktivitetid"=>$postData["activityid"]]);
+        "aktivitetid"=>$postData["activityId"]]);
 
     // kontrollera svaret
     if($stmt->rowCount()===1)   {
