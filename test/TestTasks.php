@@ -413,7 +413,6 @@ function test_UppdateraUppgifter(): string {
             . print_r($svar->getContent(), true)    . "</p>";
         }
 
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
     } finally {
@@ -443,11 +442,80 @@ function test_KontrolleraIndata(): string {
  */
 function test_RaderaUppgift(): string {
     $retur = "<h2>test_RaderaUppgift</h2>";
-
     try {
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
+        // skapa transaction
+        $db= connectDb();
+        $db->beginTransaction();
+
+        // misslyckas med att radera post med id=sju
+        $svar= raderaUppgift("sju");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Misslyckas med att radera post med id=sju, som förväntas</p>";
+        } else {
+            $retur .="<p class='error'>Misslyckas med att radera post med id=sju<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 400<br>"
+            . print_r($svar->getContent(), true)    . "</p>";
+        }
+
+        // misslyckas med att radera post med id=0.1
+        $svar= raderaUppgift("0.1");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Misslyckas med att radera post med id=0.1, som förväntas</p>";
+        } else {
+            $retur .="<p class='error'>Misslyckas med att radera post med id=0.1<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 400<br>"
+            . print_r($svar->getContent(), true)    . "</p>";
+        }
+
+        // misslyckas med att radera post med id=0
+        $svar= raderaUppgift("0");
+        if($svar->getStatus()===400)    {
+            $retur .="<p class='ok'>Misslyckas med att radera post med id=0, som förväntas</p>";
+        } else {
+            $retur .="<p class='error'>Misslyckas med att radera post med id=0<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 400<br>"
+            . print_r($svar->getContent(), true)    . "</p>";
+        }
+
+        /* Lyckas med att radera post som finns */
+
+        // hämta poster
+        $poster= hamtaSida("1");
+        if($poster->getStatus()!==200)  {
+            throw new Exception("kunde inte hämta poster");
+        }
+        $uppgifter=$poster->getContent()->tasks;
+
+        // ta fram id från första posten
+        $testId=$uppgifter[0]->id;
+
+        // lyckas radera id för första posten
+        $svar= raderaUppgift("$testId");
+        if($svar->getStatus()===200 && $svar->getContent()->result===true)    {
+            $retur .="<p class='ok'>Lyckades radera post, som förväntas</p>";
+        } else {
+            $retur .="<p class='error'>misslyckades radera post<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 200<br>"
+            . print_r($svar->getContent(), true)    . "</p>";
+        }
+
+        // misslyckas med att radera samma id som tidigare
+        $svar= raderaUppgift("$testId");
+        if($svar->getStatus()===200 && $svar->getContent()->result===false)    {
+            $retur .="<p class='ok'>missLyckades radera post som inte finns, som förväntas</p>";
+        } else {
+            $retur .="<p class='error'>misslyckades radera post som inte finns<br>"
+            . $svar->getStatus(). " returnerades istället för förväntat 200<br>"
+            . print_r($svar->getContent(), true)    . "</p>";
+        }
+
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
+    } finally {
+        // avlsuta transaktion
+        if($db) {
+            $db->rollBack();
+        }
     }
 
     return $retur;
