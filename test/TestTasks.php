@@ -426,8 +426,51 @@ function test_UppdateraUppgifter(): string {
 
 function test_KontrolleraIndata(): string {
     $retur = "<h2>test_KontrolleraIndata</h2>";
-
     try {
+        
+        // testa alla saknas
+        $postData=[];
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===3)    {
+            $retur .="<p class='ok'>testa alla element saknas lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>testa alla element saknas misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 3<br>"
+            . print_r($svar, true)    . "</p>";
+        }
+
+        // Test datum finns
+        $postData["date"]=date("Y-m-d");
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===2)    {
+            $retur .="<p class='ok'>Test alla element saknas utom datum och tid lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test alla element saknas utom datum och tid lyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 2<br>"
+            . print_r($svar, true)    . "</p>";
+        }
+
+        // Test tid finns
+
+        // Test description saknas lyckades
+
+        // Test alla element finns lyckades
+
+        // Test felaktigt datum 27.3.2023 lyckades
+
+        // Test felaktigt datum 2023-05-37 lyckades
+
+        // Test felaktigt datum 2024-01-30 lyckades
+
+        // Test felaktig tid 1:00 lyckades
+
+        // Test felaktig tid 01:79 lyckades
+
+        // Test felaktig tid 17:30 lyckades
+
+        // Test felaktigt aktivitetId 0 lyckades
+    
+
         $retur .= "<p class='error'>Inga tester implementerade</p>";
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
