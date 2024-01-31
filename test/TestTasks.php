@@ -443,35 +443,124 @@ function test_KontrolleraIndata(): string {
         $postData["date"]=date("Y-m-d");
         $svar= kontrolleraindata($postData);
         if(count($svar)===2)    {
-            $retur .="<p class='ok'>Test alla element saknas utom datum och tid lyckades, som förväntat</p>";
+            $retur .="<p class='ok'>Test alla element saknas utom datum lyckades, som förväntat</p>";
         } else {
-            $retur .="<p class='error'>Test alla element saknas utom datum och tid lyckades<br>"
+            $retur .="<p class='error'>Test alla element saknas utom datum lyckades<br>"
             . count($svar) . " felmeddelande istället för förväntat 2<br>"
             . print_r($svar, true)    . "</p>";
         }
 
         // Test tid finns
+        $postData["time"]="08:00";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===1)    {
+            $retur .="<p class='ok'>Test tid lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test tid misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 1<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
-        // Test description saknas lyckades
-
+        // Test description saknas
+        $postData["description"]="en snabb grej";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===1)    {
+            $retur .="<p class='ok'>Test description saknas lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test description saknas lyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 1<br>"
+            . print_r($svar, true)    . "</p>";
+        }
+        
         // Test alla element finns lyckades
+        $postData["description"]="random sak";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===1)    {
+            $retur .="<p class='ok'>Test alla element saknas lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test alla element saknas misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 1<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktigt datum 27.3.2023 lyckades
+        $postData["time"]="27.03.2023";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===2)    {
+            $retur .="<p class='ok'>Test felaktigt datum 27.03.2023 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktigt datum 27.03.2023 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 2<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktigt datum 2023-05-37 lyckades
+        $postData["time"]="37.05.2023";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===2)    {
+            $retur .="<p class='ok'>Test felaktigt datum 37.05.2023 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktigt datum 37.05.2023 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 2<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktigt datum 2024-01-30 lyckades
+        $postData["time"]="30.01.2024";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===2)    {
+            $retur .="<p class='ok'>Test felaktigt datum 30.01.2024 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktigt datum 30.01.2024 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 2<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktig tid 1:00 lyckades
+        $postData["time"]="01:00";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===1)    {
+            $retur .="<p class='ok'>Test felaktig tid 01:00 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktig tid 01:00 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 1<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktig tid 01:79 lyckades
+        $postData["time"]="01:79";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===2)    {
+            $retur .="<p class='ok'>Test felaktig tid 01:79 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktig tid 01:79 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 2<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktig tid 17:30 lyckades
+        $postData["time"]="17:30";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===2)    {
+            $retur .="<p class='ok'>Test felaktig tid 17:30 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktig tid 17:30 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 2<br>"
+            . print_r($svar, true)    . "</p>";
+        }
 
         // Test felaktigt aktivitetId 0 lyckades
+        $postData["activityId"]="0";
+        $svar= kontrolleraindata($postData);
+        if(count($svar)===0)    {
+            $retur .="<p class='ok'>Test felaktigt aktivitetId 0 lyckades, som förväntat</p>";
+        } else {
+            $retur .="<p class='error'>Test felaktigt aktivitetId 0 misslyckades<br>"
+            . count($svar) . " felmeddelande istället för förväntat 1<br>"
+            . print_r($svar, true)    . "</p>";
+        }
     
 
-        $retur .= "<p class='error'>Inga tester implementerade</p>";
     } catch (Exception $ex) {
         $retur .= "<p class='error'>Något gick fel, meddelandet säger:<br> {$ex->getMessage()}</p>";
     }
